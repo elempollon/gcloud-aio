@@ -14,7 +14,7 @@ from gcloud.aio.auth import Token  # pylint: disable=no-name-in-module
 from gcloud.aio.storage.bucket import Bucket
 try:
     import ujson as json
-except ModuleNotFoundError:
+except:
     import json  # type: ignore
 
 
@@ -52,9 +52,9 @@ class Storage:
         token = await self.token.get()
         # https://cloud.google.com/storage/docs/json_api/#encoding
         encoded_object_name = quote(object_name, safe='')
-        url = f'{API_ROOT}/{bucket}/o/{encoded_object_name}'
+        url = '{}/{}/o/{}'.format(API_ROOT, bucket, encoded_object_name)
         headers = {
-            'Authorization': f'Bearer {token}',
+            'Authorization': 'Bearer {}'.format(token),
         }
 
         if not self.session:
@@ -64,7 +64,7 @@ class Storage:
         resp = await session.delete(url, headers=headers, params=params or {},
                                     timeout=timeout)
         resp.raise_for_status()
-        data: str = await resp.text()
+        data = await resp.text()
         return data
 
     async def download(self, bucket: str, object_name: str, *,
@@ -78,16 +78,16 @@ class Storage:
                                 session: aiohttp.ClientSession = None) -> dict:
         data = await self._download(bucket, object_name, timeout=timeout,
                                     session=session)
-        metadata: dict = json.loads(data.decode())
+        metadata = json.loads(data.decode())
         return metadata
 
     async def list_objects(self, bucket: str, *, params: dict = None,
                            session: aiohttp.ClientSession = None,
                            timeout: int = 10) -> dict:
         token = await self.token.get()
-        url = f'{API_ROOT}/{bucket}/o'
+        url = '{}/{}/o'.format(API_ROOT, bucket)
         headers = {
-            'Authorization': f'Bearer {token}',
+            'Authorization': 'Bearer {}'.format(token),
         }
 
         if not self.session:
@@ -97,7 +97,7 @@ class Storage:
         resp = await session.get(url, headers=headers, params=params or {},
                                  timeout=timeout)
         resp.raise_for_status()
-        data: dict = await resp.json()
+        data = await resp.json()
         return data
 
     async def upload(self, bucket: str, object_name: str, file_data: Any,
@@ -105,7 +105,7 @@ class Storage:
                      session: aiohttp.ClientSession = None, timeout: int = 30,
                      force_resumable_upload: bool = None) -> dict:
         token = await self.token.get()
-        url = f'{API_ROOT_UPLOAD}/{bucket}/o'
+        url = '{}/{}/o'.format(API_ROOT_UPLOAD, bucket)
 
         if not self.session:
             self.session = aiohttp.ClientSession(conn_timeout=10,
@@ -120,7 +120,7 @@ class Storage:
 
         headers = headers or {}
         headers.update({
-            'Authorization': f'Bearer {token}',
+            'Authorization': 'Bearer {}'.format(token),
             'Content-Length': str(content_length),
             'Content-Type': content_type or '',
         })
@@ -138,7 +138,7 @@ class Storage:
                                                 headers, session=session,
                                                 timeout=timeout)
 
-        raise TypeError(f'upload type {upload_type} not supported')
+        raise TypeError('upload type {} not supported'.format(upload_type))
 
     @staticmethod
     def _get_stream_len(stream: io.IOBase) -> int:
@@ -160,7 +160,7 @@ class Storage:
         if isinstance(data, io.IOBase):
             return data
 
-        raise TypeError(f'unsupported upload type: "{type(data)}"')
+        raise TypeError('unsupported upload type: "{}"'.format(type(data)))
 
     @staticmethod
     def _decide_upload_type(force_resumable_upload: Optional[bool],
@@ -197,9 +197,9 @@ class Storage:
         token = await self.token.get()
         # https://cloud.google.com/storage/docs/json_api/#encoding
         encoded_object_name = quote(object_name, safe='')
-        url = f'{API_ROOT}/{bucket}/o/{encoded_object_name}'
+        url = '{}/{}/o/{}'.format(API_ROOT, bucket, encoded_object_name)
         headers = {
-            'Authorization': f'Bearer {token}',
+            'Authorization': 'Bearer {}'.format(token),
         }
 
         if not self.session:
@@ -212,7 +212,7 @@ class Storage:
         # N.B. the GCS API sometimes returns 'application/octet-stream' when a
         # string was uploaded. To avoid potential weirdness, always return a
         # bytes object.
-        data: bytes = await response.read()
+        data = await response.read()
         return data
 
     async def _upload_simple(self, url: str, object_name: str,
@@ -236,7 +236,7 @@ class Storage:
         resp = await session.post(url, data=stream, headers=headers,
                                   params=params, timeout=timeout)
         resp.raise_for_status()
-        data: dict = await resp.json()
+        data = await resp.json()
         return data
 
     async def _upload_resumable(self, url: str, object_name: str,
@@ -246,7 +246,7 @@ class Storage:
         # https://cloud.google.com/storage/docs/json_api/v1/how-tos/resumable-upload
         session_uri = await self._initiate_upload(url, object_name, headers,
                                                   session=session)
-        data: dict = await self._do_upload(session_uri, stream,
+        data = await self._do_upload(session_uri, stream,
                                            headers=headers, session=session,
                                            timeout=timeout)
         return data
@@ -275,7 +275,7 @@ class Storage:
         resp = await session.post(url, headers=post_headers, params=params,
                                   data=metadata, timeout=10)
         resp.raise_for_status()
-        session_uri: str = resp.headers['Location']
+        session_uri = resp.headers['Location']
         return session_uri
 
     async def _do_upload(self, session_uri: str, stream: io.IOBase,
@@ -303,5 +303,5 @@ class Storage:
             break
 
         resp.raise_for_status()
-        data: dict = await resp.json()
+        data = await resp.json()
         return data

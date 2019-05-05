@@ -21,8 +21,8 @@ import jwt
 
 GCE_METADATA_BASE = 'http://metadata.google.internal/computeMetadata/v1'
 GCE_METADATA_HEADERS = {'metadata-flavor': 'Google'}
-GCE_ENDPOINT_PROJECT = (f'{GCE_METADATA_BASE}/project/project-id')
-GCE_ENDPOINT_TOKEN = (f'{GCE_METADATA_BASE}/instance/service-accounts'
+GCE_ENDPOINT_PROJECT = ('{}/project/project-id'.format(GCE_METADATA_BASE))
+GCE_ENDPOINT_TOKEN = ('{}/instance/service-accounts'.format(GCE_METADATA_BASE),
                       '/default/token?recursive=true')
 GCLOUD_TOKEN_DURATION = 3600
 REFRESH_HEADERS = {'Content-Type': 'application/x-www-form-urlencoded'}
@@ -48,7 +48,7 @@ def get_service_data(service: Optional[str]) -> Dict[str, Any]:
 
     try:
         with open(service, 'r') as f:
-            data: Dict[str, Any] = json.loads(f.read())
+            data = json.loads(f.read())
             return data
     except FileNotFoundError:
         if set_explicitly:
@@ -82,11 +82,11 @@ class Token:
             raise Exception('scopes must be provided when token type is '
                             'service account')
 
-        self.access_token: Optional[str] = None
+        self.access_token = None
         self.access_token_duration = 0
         self.access_token_acquired_at = datetime.datetime(1970, 1, 1)
 
-        self.acquiring: Optional[asyncio.Future] = None
+        self.acquiring = None
 
     async def get_project(self) -> Optional[str]:
         project = (os.environ.get('GOOGLE_CLOUD_PROJECT')
@@ -182,7 +182,7 @@ class Token:
         elif self.token_type == Type.SERVICE_ACCOUNT:
             resp = await self._refresh_service_account(timeout=timeout)
         else:
-            raise Exception(f'unsupported token type {self.token_type}')
+            raise Exception('unsupported token type {}'.format(self.token_type))
 
         resp.raise_for_status()
         content = await resp.json()
