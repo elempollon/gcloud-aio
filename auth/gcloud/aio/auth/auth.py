@@ -22,8 +22,7 @@ import jwt
 GCE_METADATA_BASE = 'http://metadata.google.internal/computeMetadata/v1'
 GCE_METADATA_HEADERS = {'metadata-flavor': 'Google'}
 GCE_ENDPOINT_PROJECT = ('{}/project/project-id'.format(GCE_METADATA_BASE))
-GCE_ENDPOINT_TOKEN = ('{}/instance/service-accounts'.format(GCE_METADATA_BASE),
-                      '/default/token?recursive=true')
+GCE_ENDPOINT_TOKEN = '{}/instance/service-accounts'.format(GCE_METADATA_BASE) + '/default/token?recursive=true'
 GCLOUD_TOKEN_DURATION = 3600
 REFRESH_HEADERS = {'Content-Type': 'application/x-www-form-urlencoded'}
 
